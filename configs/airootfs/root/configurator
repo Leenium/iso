@@ -395,7 +395,7 @@ cat <<-_EOF_ >user_configuration.json
     "mirror_config": {
         "custom_repositories": [],
         "custom_servers": [
-            {"url": "https://stable-mirror.leenium.drunkleen.com/\$repo/os/\$arch"},
+            {"url": "https://geo.mirror.pkgbuild.com/\$repo/os/\$arch"},
             {"url": "https://mirror.rackspace.com/archlinux/\$repo/os/\$arch"},
             {"url": "https://geo.mirror.pkgbuild.com/\$repo/os/\$arch"}
         ],

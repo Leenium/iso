@@ -4,6 +4,21 @@ set -e
 
 ISO="$1"
 REUSE="$2"
+VM_RUNTIME_DIR="${LEENIUM_VM_RUNTIME_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/leenium/vm}"
+DISK="$VM_RUNTIME_DIR/leenium-iso-boot.qcow2"
+OVMF_VARS="$VM_RUNTIME_DIR/OVMF_VARS.4m.fd"
+LEGACY_TMP_DISK="/tmp/leenium-iso-boot.qcow2"
+LEGACY_TMP_OVMF="/tmp/OVMF_VARS.4m.fd"
+
+mkdir -p "$VM_RUNTIME_DIR"
+
+if [[ ! -f "$DISK" && -f "$LEGACY_TMP_DISK" ]]; then
+  mv "$LEGACY_TMP_DISK" "$DISK"
+fi
+
+if [[ ! -f "$OVMF_VARS" && -f "$LEGACY_TMP_OVMF" ]]; then
+  mv "$LEGACY_TMP_OVMF" "$OVMF_VARS"
+fi
 
 if [ $# -eq 0 ]; then
   ISO=$(ls -t release/*.iso 2>/dev/null | gum choose --header "Select ISO to boot")
@@ -20,10 +35,9 @@ fi
 
 leenium-pkg-add qemu-full edk2-ovmf
 
-DISK="/tmp/leenium-iso-boot.qcow2"
 if [[ ! -f $DISK || $REUSE != "reuse" ]]; then
   qemu-img create -f qcow2 "$DISK" 40G
-  cp /usr/share/edk2/x64/OVMF_VARS.4m.fd /tmp/OVMF_VARS.4m.fd
+  cp /usr/share/edk2/x64/OVMF_VARS.4m.fd "$OVMF_VARS"
 fi
 
 # Boot from ISO before we've installed, then boot from drive after
@@ -32,7 +46,7 @@ qemu-system-x86_64 \
   -smp "$(nproc)" \
   -m 8192 \
   -drive if=pflash,format=raw,readonly=on,file=/usr/share/edk2/x64/OVMF_CODE.4m.fd \
-  -drive if=pflash,format=raw,file=/tmp/OVMF_VARS.4m.fd \
+  -drive if=pflash,format=raw,file="$OVMF_VARS" \
   -drive file="$DISK",format=qcow2,if=none,id=drive0 \
   -device virtio-blk-pci,drive=drive0,bootindex=1 \
   -drive file="$ISO",media=cdrom,if=none,format=raw,id=cdrom0 \

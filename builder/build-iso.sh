@@ -2,7 +2,7 @@
 
 set -e
 
-LEENIUM_STABLE_MIRROR_URL="${LEENIUM_STABLE_MIRROR_URL:-https://stable-mirror.leenium.drunkleen.com/\$repo/os/\$arch}"
+LEENIUM_STABLE_MIRROR_URL="${LEENIUM_STABLE_MIRROR_URL:-https://geo.mirror.pkgbuild.com/\$repo/os/\$arch}"
 LEENIUM_PACKAGE_REPO_URL="${LEENIUM_PACKAGE_REPO_URL:-https://pkgs.leenium.drunkleen.com/stable/\$arch}"
 PACMAN_ONLINE_CONFIG="/tmp/pacman-online-stable.conf"
 
@@ -23,7 +23,7 @@ replace_in_file() {
 cp /configs/pacman-online-stable.conf "$PACMAN_ONLINE_CONFIG"
 replace_in_file \
   "$PACMAN_ONLINE_CONFIG" \
-  'https://stable-mirror.leenium.drunkleen.com/$repo/os/$arch' \
+  'https://geo.mirror.pkgbuild.com/$repo/os/$arch' \
   "$LEENIUM_STABLE_MIRROR_URL"
 replace_in_file \
   "$PACMAN_ONLINE_CONFIG" \
@@ -72,7 +72,7 @@ fi
 # Allow package and mirror endpoints to be overridden at build time.
 replace_in_file \
   "$build_cache_dir/pacman-online-stable.conf" \
-  'https://stable-mirror.leenium.drunkleen.com/$repo/os/$arch' \
+  'https://geo.mirror.pkgbuild.com/$repo/os/$arch' \
   "$LEENIUM_STABLE_MIRROR_URL"
 replace_in_file \
   "$build_cache_dir/pacman-online-stable.conf" \
@@ -80,11 +80,11 @@ replace_in_file \
   "$LEENIUM_PACKAGE_REPO_URL"
 replace_in_file \
   "$build_cache_dir/airootfs/root/configurator" \
-  'https://stable-mirror.leenium.drunkleen.com/\$repo/os/\$arch' \
+  'https://geo.mirror.pkgbuild.com/\$repo/os/\$arch' \
   "$LEENIUM_STABLE_MIRROR_URL"
 replace_in_file \
   "$build_cache_dir/airootfs/root/leenium/default/pacman/mirrorlist-stable" \
-  'https://stable-mirror.leenium.drunkleen.com/$repo/os/$arch' \
+  'https://geo.mirror.pkgbuild.com/$repo/os/$arch' \
   "$LEENIUM_STABLE_MIRROR_URL"
 replace_in_file \
   "$build_cache_dir/airootfs/root/leenium/default/pacman/pacman-stable.conf" \
@@ -92,7 +92,7 @@ replace_in_file \
   "$LEENIUM_PACKAGE_REPO_URL"
 replace_in_file \
   "$build_cache_dir/airootfs/root/leenium/boot.sh" \
-  'https://stable-mirror.leenium.drunkleen.com/$repo/os/$arch' \
+  'https://geo.mirror.pkgbuild.com/$repo/os/$arch' \
   "$LEENIUM_STABLE_MIRROR_URL"
 
 # Make log uploader available in the ISO too
