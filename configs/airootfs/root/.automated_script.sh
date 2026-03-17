@@ -5,7 +5,6 @@ use_leenium_helpers() {
   export LEENIUM_PATH="/root/leenium"
   export LEENIUM_INSTALL="/root/leenium/install"
   export LEENIUM_INSTALL_LOG_FILE="/var/log/leenium-install.log"
-  export LEENIUM_MIRROR="$(cat /root/leenium_mirror)"
   source /root/leenium/install/helpers/all.sh
 }
 
@@ -131,7 +130,6 @@ chroot_bash() {
     env LEENIUM_CHROOT_INSTALL=1 \
     LEENIUM_USER_NAME="$(<user_full_name.txt)" \
     LEENIUM_USER_EMAIL="$(<user_email_address.txt)" \
-    LEENIUM_MIRROR="$LEENIUM_MIRROR" \
     USER="$LEENIUM_USER" \
     HOME="/home/$LEENIUM_USER" \
     /bin/bash "$@"

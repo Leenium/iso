@@ -8,7 +8,7 @@ See the ISO link on [leenium.drunkleen.com](https://leenium.drunkleen.com).
 
 ## Creating the ISO
 
-Run `./bin/leenium-iso-make` and the output goes into `./release`. You can build from your local $LEENIUM_PATH for testing by using `--local-source` or from a checkout of the dev branch (instead of master) by using `--dev`.
+Run `./bin/leenium-iso-make` and the output goes into `./release`. Use `--local-source` to build from your current local installer checkout instead of cloning the installer repo.
 
 ### Environment Variables
 
@@ -19,7 +19,7 @@ You can customize the repositories used during the build process by passing in v
 
 Example usage:
 ```bash
-LEENIUM_INSTALLER_REPO="myuser/leenium-fork" LEENIUM_INSTALLER_REF="some-feature" ./bin/leenium-iso-make
+LEENIUM_INSTALLER_REPO="https://github.com/myuser/installer.git" LEENIUM_INSTALLER_REF="some-feature" ./bin/leenium-iso-make
 ```
 
 ## Testing the ISO

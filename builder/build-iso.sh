@@ -9,7 +9,7 @@ pacman --noconfirm -Sy archiso git sudo base-devel jq grub
 
 # Install leenium-keyring for package verification during build
 # The [leenium] repo is defined in /configs/pacman-online.conf with SigLevel = Optional TrustAll
-pacman --config /configs/pacman-online-${LEENIUM_MIRROR}.conf --noconfirm -Sy leenium-keyring
+pacman --config /configs/pacman-online-stable.conf --noconfirm -Sy leenium-keyring
 pacman-key --populate leenium
 
 # Setup build locations
@@ -30,14 +30,15 @@ rm -rf "$build_cache_dir/airootfs/etc/xdg/reflector"
 # Bring in our configs
 cp -r /configs/* $build_cache_dir/
 
-# Persist LEENIUM_MIRROR so it's available at install time
-echo "$LEENIUM_MIRROR" > "$build_cache_dir/airootfs/root/leenium_mirror"
-
 # Setup Leenium itself
 if [[ -d /leenium ]]; then
   cp -rp /leenium "$build_cache_dir/airootfs/root/leenium"
 else
-  git clone -b $LEENIUM_INSTALLER_REF https://github.com/$LEENIUM_INSTALLER_REPO.git "$build_cache_dir/airootfs/root/leenium"
+  leenium_repo="$LEENIUM_INSTALLER_REPO"
+  if [[ $leenium_repo != http://* && $leenium_repo != https://* && $leenium_repo != git@* ]]; then
+    leenium_repo="https://github.com/${leenium_repo}.git"
+  fi
+  git clone -b "$LEENIUM_INSTALLER_REF" "$leenium_repo" "$build_cache_dir/airootfs/root/leenium"
 fi
 
 # Make log uploader available in the ISO too
@@ -81,7 +82,7 @@ all_packages+=($(grep -v '^#' /builder/archinstall.packages | grep -v '^$'))
 
 # Download all the packages to the offline mirror inside the ISO
 mkdir -p /tmp/offlinedb
-pacman --config /configs/pacman-online-${LEENIUM_MIRROR}.conf --noconfirm -Syw "${all_packages[@]}" --cachedir $offline_mirror_dir/ --dbpath /tmp/offlinedb
+pacman --config /configs/pacman-online-stable.conf --noconfirm -Syw "${all_packages[@]}" --cachedir $offline_mirror_dir/ --dbpath /tmp/offlinedb
 repo-add --new "$offline_mirror_dir/offline.db.tar.gz" "$offline_mirror_dir/"*.pkg.tar.zst
 
 # Create a symlink to the offline mirror instead of duplicating it.

@@ -17,22 +17,11 @@ while [[ $# -gt 0 ]]; do
     ;;
   --local-source)
     LOCAL_SOURCE=1
-    LEENIUM_MIRROR=edge
-    shift
-    ;;
-  --dev)
-    LEENIUM_INSTALLER_REF=dev
-    LEENIUM_MIRROR=edge
-    shift
-    ;;
-  --rc)
-    LEENIUM_MIRROR=rc
-    LEENIUM_INSTALLER_REF=rc
     shift
     ;;
   *)
     echo "Unknown option: $1"
-    echo "Usage: $0 [--no-cache] [--no-boot-offer] [--local-source] [--dev] [--rc]"
+    echo "Usage: $0 [--no-cache] [--no-boot-offer] [--local-source]"
     exit 1
     ;;
   esac
@@ -49,14 +38,12 @@ mkdir -p "$BUILD_RELEASE_PATH"
 
 LEENIUM_INSTALLER_REPO="${LEENIUM_INSTALLER_REPO:-https://github.com/Leenium/installer.git}"
 LEENIUM_INSTALLER_REF="${LEENIUM_INSTALLER_REF:-master}"
-LEENIUM_MIRROR="${LEENIUM_MIRROR:-stable}"
 
 DOCKER_ARGS=(
   --rm
   --privileged
   -e "LEENIUM_INSTALLER_REPO=$LEENIUM_INSTALLER_REPO"
   -e "LEENIUM_INSTALLER_REF=$LEENIUM_INSTALLER_REF"
-  -e "LEENIUM_MIRROR=$LEENIUM_MIRROR"
   -e "HOST_UID=$(id -u)"
   -e "HOST_GID=$(id -g)"
   -v "$BUILD_RELEASE_PATH/:/out/"
