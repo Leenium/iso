@@ -55,6 +55,17 @@ DOCKER_ARGS=(
 
 # Use local source of Leenium from $LEENIUM_PATH instead of git checkout
 if [[ -n "${LOCAL_SOURCE-}" ]]; then
+  if [[ -z "${LEENIUM_PATH:-}" ]]; then
+    echo "Error: --local-source requires LEENIUM_PATH to be set."
+    echo "Example: LEENIUM_PATH=/home/anakin/_dev/leenium/installer ./bin/leenium-iso-make --local-source"
+    exit 1
+  fi
+
+  if [[ ! -d "$LEENIUM_PATH" ]]; then
+    echo "Error: LEENIUM_PATH does not exist: $LEENIUM_PATH"
+    exit 1
+  fi
+
   DOCKER_ARGS+=(-v "$LEENIUM_PATH:/leenium:ro")
 fi
 
