@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-use_omarchy_helpers() {
-  export OMARCHY_PATH="/root/omarchy"
-  export OMARCHY_INSTALL="/root/omarchy/install"
-  export OMARCHY_INSTALL_LOG_FILE="/var/log/omarchy-install.log"
-  export OMARCHY_MIRROR="$(cat /root/omarchy_mirror)"
-  source /root/omarchy/install/helpers/all.sh
+use_leenium_helpers() {
+  export LEENIUM_PATH="/root/leenium"
+  export LEENIUM_INSTALL="/root/leenium/install"
+  export LEENIUM_INSTALL_LOG_FILE="/var/log/leenium-install.log"
+  export LEENIUM_MIRROR="$(cat /root/leenium_mirror)"
+  source /root/leenium/install/helpers/all.sh
 }
 
 run_configurator() {
   set_tokyo_night_colors
   ./configurator
-  export OMARCHY_USER="$(jq -r '.users[0].username' user_credentials.json)"
+  export LEENIUM_USER="$(jq -r '.users[0].username' user_credentials.json)"
 }
 
 install_arch() {
@@ -20,23 +20,23 @@ install_arch() {
   gum style --foreground 3 --padding "1 0 0 $PADDING_LEFT" "Installing..."
   echo
 
-  touch /var/log/omarchy-install.log
+  touch /var/log/leenium-install.log
 
   start_log_output
 
   # Set CURRENT_SCRIPT for the trap to display better when nothing is returned for some reason
   CURRENT_SCRIPT="install_base_system"
-  install_base_system > >(sed -u 's/\x1b\[[0-9;]*[a-zA-Z]//g' >>/var/log/omarchy-install.log) 2>&1
+  install_base_system > >(sed -u 's/\x1b\[[0-9;]*[a-zA-Z]//g' >>/var/log/leenium-install.log) 2>&1
   unset CURRENT_SCRIPT
   stop_log_output
 }
 
-install_omarchy() {
+install_leenium() {
   chroot_bash -lc "sudo pacman -S --noconfirm --needed gum" >/dev/null
-  chroot_bash -lc "source /home/$OMARCHY_USER/.local/share/omarchy/install.sh || bash"
+  chroot_bash -lc "source /home/$LEENIUM_USER/.local/share/leenium/install.sh || bash"
 
   # Reboot if requested by installer
-  if [[ -f /mnt/var/tmp/omarchy-install-completed ]]; then
+  if [[ -f /mnt/var/tmp/leenium-install-completed ]]; then
     reboot
   fi
 }
@@ -72,7 +72,7 @@ install_base_system() {
   # Initialize and populate the keyring
   pacman-key --init
   pacman-key --populate archlinux
-  pacman-key --populate omarchy
+  pacman-key --populate leenium
 
   # Sync the offline database so pacman can find packages
   pacman -Sy --noconfirm
@@ -95,51 +95,51 @@ install_base_system() {
   cp /etc/pacman.conf /mnt/etc/pacman.conf
 
   # Mount the offline mirror so it's accessible in the chroot
-  mkdir -p /mnt/var/cache/omarchy/mirror/offline
-  mount --bind /var/cache/omarchy/mirror/offline /mnt/var/cache/omarchy/mirror/offline
+  mkdir -p /mnt/var/cache/leenium/mirror/offline
+  mount --bind /var/cache/leenium/mirror/offline /mnt/var/cache/leenium/mirror/offline
 
   # Mount the packages dir so it's accessible in the chroot
   mkdir -p /mnt/opt/packages
   mount --bind /opt/packages /mnt/opt/packages
 
-  # No need to ask for sudo during the installation (omarchy itself responsible for removing after install)
+  # No need to ask for sudo during the installation (leenium itself responsible for removing after install)
   mkdir -p /mnt/etc/sudoers.d
-  cat >/mnt/etc/sudoers.d/99-omarchy-installer <<EOF
+  cat >/mnt/etc/sudoers.d/99-leenium-installer <<EOF
 root ALL=(ALL:ALL) NOPASSWD: ALL
 %wheel ALL=(ALL:ALL) NOPASSWD: ALL
-$OMARCHY_USER ALL=(ALL:ALL) NOPASSWD: ALL
+$LEENIUM_USER ALL=(ALL:ALL) NOPASSWD: ALL
 EOF
-  chmod 440 /mnt/etc/sudoers.d/99-omarchy-installer
+  chmod 440 /mnt/etc/sudoers.d/99-leenium-installer
 
-  # Copy the local omarchy repo to the user's home directory
-  mkdir -p /mnt/home/$OMARCHY_USER/.local/share/
-  cp -r /root/omarchy /mnt/home/$OMARCHY_USER/.local/share/
+  # Copy the local leenium repo to the user's home directory
+  mkdir -p /mnt/home/$LEENIUM_USER/.local/share/
+  cp -r /root/leenium /mnt/home/$LEENIUM_USER/.local/share/
 
-  chown -R 1000:1000 /mnt/home/$OMARCHY_USER/.local/
+  chown -R 1000:1000 /mnt/home/$LEENIUM_USER/.local/
 
   # Ensure all necessary scripts are executable
-  find /mnt/home/$OMARCHY_USER/.local/share/omarchy -type f -path "*/bin/*" -exec chmod +x {} \;
-  chmod +x /mnt/home/$OMARCHY_USER/.local/share/omarchy/boot.sh 2>/dev/null || true
-  chmod +x /mnt/home/$OMARCHY_USER/.local/share/omarchy/default/waybar/indicators/screen-recording.sh 2>/dev/null || true
-  chmod +x /mnt/home/$OMARCHY_USER/.local/share/omarchy/default/waybar/indicators/idle.sh 2>/dev/null || true
-  chmod +x /mnt/home/$OMARCHY_USER/.local/share/omarchy/default/waybar/indicators/notification-silencing.sh 2>/dev/null || true
+  find /mnt/home/$LEENIUM_USER/.local/share/leenium -type f -path "*/bin/*" -exec chmod +x {} \;
+  chmod +x /mnt/home/$LEENIUM_USER/.local/share/leenium/boot.sh 2>/dev/null || true
+  chmod +x /mnt/home/$LEENIUM_USER/.local/share/leenium/default/waybar/indicators/screen-recording.sh 2>/dev/null || true
+  chmod +x /mnt/home/$LEENIUM_USER/.local/share/leenium/default/waybar/indicators/idle.sh 2>/dev/null || true
+  chmod +x /mnt/home/$LEENIUM_USER/.local/share/leenium/default/waybar/indicators/notification-silencing.sh 2>/dev/null || true
 }
 
 chroot_bash() {
-  HOME=/home/$OMARCHY_USER \
-    arch-chroot -u $OMARCHY_USER /mnt/ \
-    env OMARCHY_CHROOT_INSTALL=1 \
-    OMARCHY_USER_NAME="$(<user_full_name.txt)" \
-    OMARCHY_USER_EMAIL="$(<user_email_address.txt)" \
-    OMARCHY_MIRROR="$OMARCHY_MIRROR" \
-    USER="$OMARCHY_USER" \
-    HOME="/home/$OMARCHY_USER" \
+  HOME=/home/$LEENIUM_USER \
+    arch-chroot -u $LEENIUM_USER /mnt/ \
+    env LEENIUM_CHROOT_INSTALL=1 \
+    LEENIUM_USER_NAME="$(<user_full_name.txt)" \
+    LEENIUM_USER_EMAIL="$(<user_email_address.txt)" \
+    LEENIUM_MIRROR="$LEENIUM_MIRROR" \
+    USER="$LEENIUM_USER" \
+    HOME="/home/$LEENIUM_USER" \
     /bin/bash "$@"
 }
 
 if [[ $(tty) == "/dev/tty1" ]]; then
-  use_omarchy_helpers
+  use_leenium_helpers
   run_configurator
   install_arch
-  install_omarchy
+  install_leenium
 fi
