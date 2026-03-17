@@ -2,6 +2,34 @@
 
 set -e
 
+LEENIUM_STABLE_MIRROR_URL="${LEENIUM_STABLE_MIRROR_URL:-https://stable-mirror.leenium.drunkleen.com/\$repo/os/\$arch}"
+LEENIUM_PACKAGE_REPO_URL="${LEENIUM_PACKAGE_REPO_URL:-https://pkgs.leenium.drunkleen.com/stable/\$arch}"
+PACMAN_ONLINE_CONFIG="/tmp/pacman-online-stable.conf"
+
+replace_in_file() {
+  local file="$1"
+  local from="$2"
+  local to="$3"
+
+  local from_escaped
+  local to_escaped
+
+  from_escaped=$(printf '%s' "$from" | sed 's/[][\\/.*^$+?|(){}-]/\\&/g')
+  to_escaped=$(printf '%s' "$to" | sed 's/[\\/&]/\\&/g')
+
+  sed -i "s/${from_escaped}/${to_escaped}/g" "$file"
+}
+
+cp /configs/pacman-online-stable.conf "$PACMAN_ONLINE_CONFIG"
+replace_in_file \
+  "$PACMAN_ONLINE_CONFIG" \
+  'https://stable-mirror.leenium.drunkleen.com/$repo/os/$arch' \
+  "$LEENIUM_STABLE_MIRROR_URL"
+replace_in_file \
+  "$PACMAN_ONLINE_CONFIG" \
+  'https://pkgs.leenium.drunkleen.com/stable/$arch' \
+  "$LEENIUM_PACKAGE_REPO_URL"
+
 # Note that these are packages installed to the Arch container used to build the ISO.
 pacman-key --init
 pacman --noconfirm -Sy archlinux-keyring
@@ -9,7 +37,7 @@ pacman --noconfirm -Sy archiso git sudo base-devel jq grub
 
 # Install leenium-keyring for package verification during build
 # The [leenium] repo is defined in /configs/pacman-online.conf with SigLevel = Optional TrustAll
-pacman --config /configs/pacman-online-stable.conf --noconfirm -Sy leenium-keyring
+pacman --config "$PACMAN_ONLINE_CONFIG" --noconfirm -Sy leenium-keyring
 pacman-key --populate leenium
 
 # Setup build locations
@@ -40,6 +68,32 @@ else
   fi
   git clone -b "$LEENIUM_INSTALLER_REF" "$leenium_repo" "$build_cache_dir/airootfs/root/leenium"
 fi
+
+# Allow package and mirror endpoints to be overridden at build time.
+replace_in_file \
+  "$build_cache_dir/pacman-online-stable.conf" \
+  'https://stable-mirror.leenium.drunkleen.com/$repo/os/$arch' \
+  "$LEENIUM_STABLE_MIRROR_URL"
+replace_in_file \
+  "$build_cache_dir/pacman-online-stable.conf" \
+  'https://pkgs.leenium.drunkleen.com/stable/$arch' \
+  "$LEENIUM_PACKAGE_REPO_URL"
+replace_in_file \
+  "$build_cache_dir/airootfs/root/configurator" \
+  'https://stable-mirror.leenium.drunkleen.com/\$repo/os/\$arch' \
+  "$LEENIUM_STABLE_MIRROR_URL"
+replace_in_file \
+  "$build_cache_dir/airootfs/root/leenium/default/pacman/mirrorlist-stable" \
+  'https://stable-mirror.leenium.drunkleen.com/$repo/os/$arch' \
+  "$LEENIUM_STABLE_MIRROR_URL"
+replace_in_file \
+  "$build_cache_dir/airootfs/root/leenium/default/pacman/pacman-stable.conf" \
+  'https://pkgs.leenium.drunkleen.com/stable/$arch' \
+  "$LEENIUM_PACKAGE_REPO_URL"
+replace_in_file \
+  "$build_cache_dir/airootfs/root/leenium/boot.sh" \
+  'https://stable-mirror.leenium.drunkleen.com/$repo/os/$arch' \
+  "$LEENIUM_STABLE_MIRROR_URL"
 
 # Make log uploader available in the ISO too
 mkdir -p "$build_cache_dir/airootfs/usr/local/bin/"
@@ -82,7 +136,7 @@ all_packages+=($(grep -v '^#' /builder/archinstall.packages | grep -v '^$'))
 
 # Download all the packages to the offline mirror inside the ISO
 mkdir -p /tmp/offlinedb
-pacman --config /configs/pacman-online-stable.conf --noconfirm -Syw "${all_packages[@]}" --cachedir $offline_mirror_dir/ --dbpath /tmp/offlinedb
+pacman --config "$PACMAN_ONLINE_CONFIG" --noconfirm -Syw "${all_packages[@]}" --cachedir $offline_mirror_dir/ --dbpath /tmp/offlinedb
 repo-add --new "$offline_mirror_dir/offline.db.tar.gz" "$offline_mirror_dir/"*.pkg.tar.zst
 
 # Create a symlink to the offline mirror instead of duplicating it.

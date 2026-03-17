@@ -38,12 +38,16 @@ mkdir -p "$BUILD_RELEASE_PATH"
 
 LEENIUM_INSTALLER_REPO="${LEENIUM_INSTALLER_REPO:-https://github.com/Leenium/installer.git}"
 LEENIUM_INSTALLER_REF="${LEENIUM_INSTALLER_REF:-master}"
+LEENIUM_STABLE_MIRROR_URL="${LEENIUM_STABLE_MIRROR_URL:-https://stable-mirror.leenium.drunkleen.com/\$repo/os/\$arch}"
+LEENIUM_PACKAGE_REPO_URL="${LEENIUM_PACKAGE_REPO_URL:-https://pkgs.leenium.drunkleen.com/stable/\$arch}"
 
 DOCKER_ARGS=(
   --rm
   --privileged
   -e "LEENIUM_INSTALLER_REPO=$LEENIUM_INSTALLER_REPO"
   -e "LEENIUM_INSTALLER_REF=$LEENIUM_INSTALLER_REF"
+  -e "LEENIUM_STABLE_MIRROR_URL=$LEENIUM_STABLE_MIRROR_URL"
+  -e "LEENIUM_PACKAGE_REPO_URL=$LEENIUM_PACKAGE_REPO_URL"
   -e "HOST_UID=$(id -u)"
   -e "HOST_GID=$(id -g)"
   -v "$BUILD_RELEASE_PATH/:/out/"
