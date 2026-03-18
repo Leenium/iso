@@ -37,7 +37,10 @@ pacman --noconfirm -Sy archiso git sudo base-devel jq grub
 
 # Install leenium-keyring for package verification during build
 # The [leenium] repo is defined in /configs/pacman-online.conf with SigLevel = Optional TrustAll
-pacman --config "$PACMAN_ONLINE_CONFIG" --noconfirm -Sy leenium-keyring
+isolated_pacman_cache="/tmp/pacman-pkg-cache"
+mkdir -p "$isolated_pacman_cache"
+rm -f "$isolated_pacman_cache"/leenium-keyring-*.pkg.tar.*
+pacman --config "$PACMAN_ONLINE_CONFIG" --cachedir "$isolated_pacman_cache" --noconfirm -Sy leenium-keyring
 pacman-key --populate leenium
 
 # Setup build locations
