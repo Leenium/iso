@@ -2,7 +2,7 @@
 
 This repo builds the bootable Leenium ISO.
 
-Its job is to produce the install image, not to define the full desktop payload. The actual system layer lives in the companion installer repo at [github.com/leenium/installer](https://github.com/leenium/installer), which this repo fetches or mounts during the build.
+Its job is to produce the install image, not to define the full desktop payload. The actual system layer lives in the companion installer repo at [github.com/leenium/installer](https://github.com/leeniumos/leenium), which this repo fetches or mounts during the build.
 
 Leenium is a fork of [Omarchy](https://github.com/basecamp/omarchy).
 
@@ -98,7 +98,7 @@ The build can be pointed at different installer repos, refs, and package mirrors
 Example:
 
 ```bash
-LEENIUM_INSTALLER_REPO="https://github.com/myuser/installer.git" \
+LEENIUM_INSTALLER_REPO="https://github.com/leeniumos/leenium.git" \
 LEENIUM_INSTALLER_REF="some-feature" \
 ./bin/leenium-iso-make
 ```
@@ -153,7 +153,7 @@ That flow rebuilds the master ISO, signs it, computes the SHA256, renames it for
 
 This repo builds the image.
 
-The installer repo at [github.com/leenium/installer](https://github.com/leenium/installer) defines what Leenium actually becomes once installation runs. In practice:
+The installer repo at [github.com/leenium/installer](https://github.com/leeniumos/leenium) defines what Leenium actually becomes once installation runs. In practice:
 
 - `iso/` is the delivery mechanism
 - `installer/` is the system payload
