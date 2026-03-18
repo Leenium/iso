@@ -1,69 +1,109 @@
 # Leenium ISO
 
-The Leenium ISO streamlines [the installation of Leenium](https://leenium.drunkleen.com). It includes the Leenium Configurator as a front-end to archinstall and automatically launches the [Leenium Installer](https://github.com/leenium/installer.git) after base arch has been setup.
+This repo builds the bootable Leenium ISO.
 
-## Downloading the latest ISO
+Its job is to produce the install image, not to define the full desktop payload. The actual system layer lives in the companion installer repo at [github.com/leenium/installer](https://github.com/leenium/installer), which this repo fetches or mounts during the build.
 
-See the ISO link on [leenium.drunkleen.com](https://leenium.drunkleen.com).
+Leenium is a fork of [Omarchy](https://github.com/basecamp/omarchy).
 
-## Creating the ISO
+## What The ISO Does
 
-Build from the `iso/` directory:
+The Leenium ISO packages:
+
+- the ArchISO build configuration
+- Leenium boot and installer assets
+- the logic to pull in a specific installer repo/ref
+- release helpers for booting, signing, and uploading finished ISOs
+
+The resulting ISO is intended to streamline installation of Leenium by combining an Arch-based base install flow with the Leenium installer payload.
+
+## Main Commands
+
+All primary workflows live under [`bin/`](./bin):
+
+- `leenium-iso-make`: build an ISO
+- `leenium-iso-boot`: boot a built ISO locally
+- `leenium-iso-sign`: sign a finished ISO
+- `leenium-iso-upload`: upload a release artifact
+- `leenium-iso-release`: make, sign, and upload in one flow
+- `leenium-vm`: local VM helper
+
+## Building An ISO
+
+Run from the `iso/` repo root:
 
 ```bash
-cd iso
 ./bin/leenium-iso-make
 ```
 
-What this does:
+What it does:
 
-- Initializes the required git submodules
-- Builds the ISO inside Docker
-- Writes the finished ISO into `iso/release/`
-- Renames the file to include the installer ref, such as `leenium-<date>-x86_64-master.iso`
-- Offers to boot the ISO when the build finishes
+1. Initializes git submodules.
+2. Prepares a local `release/` directory.
+3. Runs the ArchISO build inside Docker.
+4. Pulls in the Leenium installer repo at the requested ref.
+5. Writes the finished ISO into `release/`.
+6. Renames the artifact to include the installer ref.
+7. Optionally offers to boot the result.
 
-Requirements:
+Typical output looks like:
+
+```text
+release/leenium-YYYY-MM-DD-x86_64-<installer-ref>.iso
+```
+
+## Requirements
+
+To build locally you need:
 
 - `docker`
 - `git`
-- `gum` (used for the post-build boot prompt)
+- `gum` for the interactive post-build boot prompt
 
-Useful options:
+If Docker cannot run privileged containers on the host, the build will fail.
 
-- `--no-cache` disables the daily build cache
-- `--no-boot-offer` skips the interactive boot prompt after the build
-- `--local-source` uses a local installer checkout instead of cloning from Git
+## Useful Options
+
+`leenium-iso-make` supports:
+
+- `--no-cache`: disable the daily package cache
+- `--no-boot-offer`: skip the interactive boot prompt after build
+- `--local-source`: use a local installer checkout instead of cloning from Git
 
 Example:
 
 ```bash
-cd iso
 ./bin/leenium-iso-make --no-boot-offer
 ```
 
-To build from a local installer checkout:
+## Building Against A Local Installer Checkout
+
+To test ISO changes together with local installer changes:
 
 ```bash
-cd iso
 LEENIUM_PATH=/path/to/installer ./bin/leenium-iso-make --local-source
 ```
 
-### Environment Variables
+This mounts your local installer repo into the build container instead of cloning from the default upstream source.
 
-You can customize the repositories used during the build process by passing in variables:
+## Environment Variables
 
-- `LEENIUM_INSTALLER_REPO` - Git URL for the installer (default: `https://github.com/leenium/installer.git`)
-- `LEENIUM_INSTALLER_REF` - Git ref (branch/tag) for the installer (default: `master`)
-- `LEENIUM_STABLE_MIRROR_URL` - Arch package mirror used for `core`, `extra`, and `multilib`
-- `LEENIUM_PACKAGE_REPO_URL` - Leenium package repository URL
+The build can be pointed at different installer repos, refs, and package mirrors.
 
-Example usage:
+- `LEENIUM_INSTALLER_REPO`: installer Git URL
+- `LEENIUM_INSTALLER_REF`: installer branch or tag
+- `LEENIUM_STABLE_MIRROR_URL`: Arch mirror for `core`, `extra`, and `multilib`
+- `LEENIUM_PACKAGE_REPO_URL`: Leenium package repo URL
+
+Example:
+
 ```bash
-LEENIUM_INSTALLER_REPO="https://github.com/myuser/installer.git" LEENIUM_INSTALLER_REF="some-feature" ./bin/leenium-iso-make
+LEENIUM_INSTALLER_REPO="https://github.com/myuser/installer.git" \
+LEENIUM_INSTALLER_REF="some-feature" \
+./bin/leenium-iso-make
 ```
 
-If the default Leenium package hosts are unavailable, you can point the build at different mirrors:
+If you need alternate package hosting:
 
 ```bash
 LEENIUM_STABLE_MIRROR_URL="https://your-mirror.example/\$repo/os/\$arch" \
@@ -71,18 +111,53 @@ LEENIUM_PACKAGE_REPO_URL="https://your-packages.example/stable/\$arch" \
 ./bin/leenium-iso-make
 ```
 
-## Testing the ISO
+## Testing, Signing, And Releasing
 
-Run `./bin/leenium-iso-boot [release/leenium.iso]`.
+Boot a built ISO:
 
-## Signing the ISO
+```bash
+./bin/leenium-iso-boot release/<iso-name>.iso
+```
 
-Run `./bin/leenium-iso-sign [gpg-user] [release/leenium.iso]`.
+Sign a built ISO:
 
-## Uploading the ISO
+```bash
+./bin/leenium-iso-sign [gpg-user] release/<iso-name>.iso
+```
 
-Run `./bin/leenium-iso-upload [release/leenium.iso]`. This requires you've configured rclone (use `rclone config`).
+Upload a built ISO:
 
-## Full release of the ISO
+```bash
+./bin/leenium-iso-upload release/<iso-name>.iso
+```
 
-Run `./bin/leenium-iso-release` to create, test, sign, and upload the ISO in one flow.
+This requires `rclone` to be configured first.
+
+Run the release flow:
+
+```bash
+./bin/leenium-iso-release <version>
+```
+
+That flow rebuilds the master ISO, signs it, computes the SHA256, renames it for release, and uploads it.
+
+## Repo Layout
+
+- `archiso/`: ArchISO sources
+- `configs/`: bootloader and airootfs configuration
+- `builder/`: containerized build scripts
+- `bin/`: developer and release commands
+- `plans/`: install/release planning notes
+
+## Relationship to the Installer Repo
+
+This repo builds the image.
+
+The installer repo at [github.com/leenium/installer](https://github.com/leenium/installer) defines what Leenium actually becomes once installation runs. In practice:
+
+- `iso/` is the delivery mechanism
+- `installer/` is the system payload
+
+## Downloading A Release
+
+For published ISO downloads, use the links from [leenium.drunkleen.com](https://leenium.drunkleen.com).
