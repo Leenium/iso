@@ -1,6 +1,6 @@
 # Leenium ISO
 
-The Leenium ISO streamlines [the installation of Leenium](https://leenium.drunkleen.com). It includes the Leenium Configurator as a front-end to archinstall and automatically launches the [Leenium Installer](https://github.com/Leenium/installer.git) after base arch has been setup.
+The Leenium ISO streamlines [the installation of Leenium](https://leenium.drunkleen.com). It includes the Leenium Configurator as a front-end to archinstall and automatically launches the [Leenium Installer](https://github.com/leenium/installer.git) after base arch has been setup.
 
 ## Downloading the latest ISO
 
@@ -53,7 +53,7 @@ LEENIUM_PATH=/path/to/installer ./bin/leenium-iso-make --local-source
 
 You can customize the repositories used during the build process by passing in variables:
 
-- `LEENIUM_INSTALLER_REPO` - Git URL for the installer (default: `https://github.com/Leenium/installer.git`)
+- `LEENIUM_INSTALLER_REPO` - Git URL for the installer (default: `https://github.com/leenium/installer.git`)
 - `LEENIUM_INSTALLER_REF` - Git ref (branch/tag) for the installer (default: `master`)
 - `LEENIUM_STABLE_MIRROR_URL` - Arch package mirror used for `core`, `extra`, and `multilib`
 - `LEENIUM_PACKAGE_REPO_URL` - Leenium package repository URL
