@@ -3,6 +3,8 @@
 # Rely on Leenium for styling and error handling
 source "$LEENIUM_INSTALL/helpers/all.sh"
 
+LEENIUM_ACCENT_COLOR="${LEENIUM_ACCENT_COLOR:-#35d6a0}"
+
 # Ensure tzupdate is available for guessing timezone
 command -v tzupdate >/dev/null || sudo pacman -Sy --noconfirm tzupdate
 
@@ -98,7 +100,7 @@ user_form() {
   step "Let's setup your user account..."
 
   while true; do
-    username=$(gum input --placeholder "Alphanumeric without spaces (like dhh)" --prompt.foreground="#845DF9" --prompt "Username> ") || abort
+    username=$(gum input --placeholder "Alphanumeric without spaces (like dhh)" --prompt.foreground="$LEENIUM_ACCENT_COLOR" --prompt "Username> ") || abort
 
     if [[ "$username" =~ ^[a-z_][a-z0-9_-]*[$]?$ ]]; then
       break
@@ -108,8 +110,8 @@ user_form() {
   done
 
   while true; do
-    password=$(gum input --placeholder "Used for user + root + encryption" --prompt.foreground="#845DF9" --password --prompt "Password> ") || abort
-    password_confirmation=$(gum input --placeholder "Must match the password you just typed" --prompt.foreground="#845DF9" --password --prompt "Confirm> ") || abort
+    password=$(gum input --placeholder "Used for user + root + encryption" --prompt.foreground="$LEENIUM_ACCENT_COLOR" --password --prompt "Password> ") || abort
+    password_confirmation=$(gum input --placeholder "Must match the password you just typed" --prompt.foreground="$LEENIUM_ACCENT_COLOR" --password --prompt "Confirm> ") || abort
 
     if [[ -n "$password" && "$password" == "$password_confirmation" ]]; then
       break
@@ -123,11 +125,11 @@ user_form() {
   # Hash the password using yescrypt
   password_hash=$(printf '%s' "$password" | openssl passwd -6 -stdin)
 
-  full_name=$(gum input --placeholder "Used for git authentication (hit return to skip)" --prompt.foreground="#845DF9" --prompt "Full name> ")
-  email_address=$(gum input --placeholder "Used for git authentication (hit return to skip)" --prompt.foreground="#845DF9" --prompt "Email address> ")
+  full_name=$(gum input --placeholder "Used for git authentication (hit return to skip)" --prompt.foreground="$LEENIUM_ACCENT_COLOR" --prompt "Full name> ")
+  email_address=$(gum input --placeholder "Used for git authentication (hit return to skip)" --prompt.foreground="$LEENIUM_ACCENT_COLOR" --prompt "Email address> ")
 
   while true; do
-    hostname=$(gum input --placeholder "Alphanumeric without spaces (or return for 'leenium')" --prompt.foreground="#845DF9" --prompt "Hostname> ")
+    hostname=$(gum input --placeholder "Alphanumeric without spaces (or return for 'leenium')" --prompt.foreground="$LEENIUM_ACCENT_COLOR" --prompt "Hostname> ")
 
     if [[ "$hostname" =~ ^[A-Za-z_][A-Za-z0-9_-]*\$?$ ]]; then
       break
