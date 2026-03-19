@@ -28,12 +28,24 @@ All primary workflows live under [`bin/`](./bin):
 - `leenium-iso-release`: make, sign, and upload in one flow
 - `leenium-vm`: local VM helper
 
+There is also a top-level [`Makefile`](./Makefile) that wraps these commands with discoverable help and common shortcuts:
+
+```bash
+make help
+```
+
 ## Building An ISO
 
 Run from the `iso/` repo root:
 
 ```bash
 ./bin/leenium-iso-make
+```
+
+Or use the Makefile wrapper:
+
+```bash
+make build
 ```
 
 What it does:
@@ -76,12 +88,24 @@ Example:
 ./bin/leenium-iso-make --no-boot-offer
 ```
 
+Makefile equivalent:
+
+```bash
+make build NO_BOOT_OFFER=1
+```
+
 ## Building Against A Local Installer Checkout
 
 To test ISO changes together with local installer changes:
 
 ```bash
 LEENIUM_PATH=/path/to/installer ./bin/leenium-iso-make --local-source
+```
+
+Makefile equivalent:
+
+```bash
+make build-local LEENIUM_PATH=/path/to/installer
 ```
 
 This mounts your local installer repo into the build container instead of cloning from the default upstream source.
@@ -119,10 +143,22 @@ Boot a built ISO:
 ./bin/leenium-iso-boot release/<iso-name>.iso
 ```
 
+Or boot the latest ISO automatically:
+
+```bash
+make boot
+```
+
 Sign a built ISO:
 
 ```bash
-./bin/leenium-iso-sign [gpg-user] release/<iso-name>.iso
+./bin/leenium-iso-sign release/<iso-name>.iso
+```
+
+Makefile equivalent:
+
+```bash
+make sign ISO=release/<iso-name>.iso
 ```
 
 Upload a built ISO:
@@ -137,6 +173,18 @@ Run the release flow:
 
 ```bash
 ./bin/leenium-iso-release <version>
+```
+
+Makefile equivalent:
+
+```bash
+make release VERSION=<version>
+```
+
+To reuse the newest existing `*master.iso` without rebuilding first:
+
+```bash
+make release-no-make VERSION=<version>
 ```
 
 That flow rebuilds the master ISO, signs it, computes the SHA256, renames it for release, and uploads it.
