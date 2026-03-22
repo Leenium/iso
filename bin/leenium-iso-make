@@ -124,8 +124,9 @@ if [[ -n "${LOCAL_SOURCE-}" ]]; then
   DOCKER_ARGS+=(-v "$LEENIUM_PATH:/leenium:ro")
 fi
 
-# Use local pacman cache if you already have one on host to speed up repeat runs
-if [ -d "/var/cache/pacman/pkg" ]; then
+# Use local pacman cache if you already have one on host to speed up repeat runs.
+# Honor --no-cache by not mounting the host cache at all.
+if [[ -z "$NO_CACHE" ]] && [ -d "/var/cache/pacman/pkg" ]; then
   DOCKER_ARGS+=(-v "/var/cache/pacman/pkg:/var/cache/pacman/pkg")
 fi
 

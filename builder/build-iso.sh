@@ -166,8 +166,10 @@ run_logged "Populate leenium pacman keys" pacman-key --populate leenium
 # Setup build locations
 build_cache_dir="/var/cache"
 offline_mirror_dir="$build_cache_dir/airootfs/var/cache/leenium/mirror/offline"
+offline_pacman_cache_dir="$build_cache_dir/pacman-offline-cache"
 mkdir -p $build_cache_dir/
 mkdir -p $offline_mirror_dir/
+mkdir -p $offline_pacman_cache_dir/
 
 section "Prepare Archiso Workspace"
 
@@ -266,6 +268,7 @@ info "Preparing offline mirror for $package_count package entries"
 # Download all the packages to the offline mirror inside the ISO
 mkdir -p /tmp/offlinedb
 run_logged "Download offline mirror packages" pacman --config "$PACMAN_ONLINE_CONFIG" --noconfirm --noprogressbar -Syw "${all_packages[@]}" --cachedir "$offline_mirror_dir/" --dbpath /tmp/offlinedb
+run_logged "Strip cached package signatures" find "$offline_mirror_dir" -maxdepth 1 -type f -name '*.sig' -delete
 run_logged "Build offline mirror database" repo-add --new "$offline_mirror_dir/offline.db.tar.gz" "$offline_mirror_dir/"*.pkg.tar.zst
 
 # Create a symlink to the offline mirror instead of duplicating it.
@@ -277,6 +280,16 @@ ln -s "$offline_mirror_dir" "/var/cache/leenium/mirror/offline"
 # Copy the offline pacman.conf to the ISO's /etc directory so the live environment uses our
 # same config when booted. 
 cp $build_cache_dir/pacman-offline.conf "$build_cache_dir/airootfs/etc/pacman.conf"
+if ! grep -q '^CacheDir[[:space:]]*=' "$build_cache_dir/pacman-offline.conf"; then
+  printf '\nCacheDir = %s\n' "$offline_pacman_cache_dir" >> "$build_cache_dir/pacman-offline.conf"
+else
+  replace_in_file "$build_cache_dir/pacman-offline.conf" 'CacheDir = /var/cache/pacman/pkg' "CacheDir = $offline_pacman_cache_dir"
+fi
+if ! grep -q '^CacheDir[[:space:]]*=' "$build_cache_dir/airootfs/etc/pacman.conf"; then
+  printf '\nCacheDir = %s\n' '/var/cache/pacman-offline-cache' >> "$build_cache_dir/airootfs/etc/pacman.conf"
+else
+  replace_in_file "$build_cache_dir/airootfs/etc/pacman.conf" 'CacheDir = /var/cache/pacman/pkg' 'CacheDir = /var/cache/pacman-offline-cache'
+fi
 
 # Finally, we assemble the entire ISO
 section "Build ISO"
