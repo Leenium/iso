@@ -1,7 +1,45 @@
 #!/bin/bash
 
 # Abort if anything fails
-set -e
+set -euo pipefail
+
+if [[ -t 1 ]]; then
+  C_RESET=$'\033[0m'
+  C_DIM=$'\033[2m'
+  C_BOLD=$'\033[1m'
+  C_BLUE=$'\033[38;5;39m'
+  C_CYAN=$'\033[38;5;45m'
+  C_GREEN=$'\033[38;5;42m'
+  C_RED=$'\033[38;5;196m'
+else
+  C_RESET=''
+  C_DIM=''
+  C_BOLD=''
+  C_BLUE=''
+  C_CYAN=''
+  C_GREEN=''
+  C_RED=''
+fi
+
+timestamp() {
+  date '+%Y-%m-%d %H:%M:%S'
+}
+
+section() {
+  printf '\n%s%s== %s ==%s\n' "$C_BOLD" "$C_BLUE" "$1" "$C_RESET"
+}
+
+info() {
+  printf '%s[%s] INFO%s %s\n' "$C_CYAN" "$(timestamp)" "$C_RESET" "$1"
+}
+
+ok() {
+  printf '%s[%s] OK%s %s\n' "$C_GREEN" "$(timestamp)" "$C_RESET" "$1"
+}
+
+fail() {
+  printf '%s[%s] ERROR%s %s\n' "$C_RED" "$(timestamp)" "$C_RESET" "$1" >&2
+}
 
 # Parse command line arguments
 NO_CACHE=""
@@ -34,7 +72,17 @@ git submodule update --init --recursive --jobs=8
 BUILD_SCRIPT="builder/build-iso.sh"
 BUILD_ROOT=$(realpath "${BASH_SOURCE[0]%/*}/..")
 BUILD_RELEASE_PATH="$BUILD_ROOT/release"
+BUILD_LOG_PATH="$BUILD_ROOT/logs"
 mkdir -p "$BUILD_RELEASE_PATH"
+mkdir -p "$BUILD_LOG_PATH"
+
+BUILD_TIMESTAMP=$(date '+%Y-%m-%d_%H-%M-%S')
+BUILD_LOG_FILE="$BUILD_LOG_PATH/build-$BUILD_TIMESTAMP.log"
+
+exec > >(tee -a "$BUILD_LOG_FILE") 2>&1
+
+section "Leenium ISO Build"
+info "Log file: $BUILD_LOG_FILE"
 
 LEENIUM_INSTALLER_REPO="${LEENIUM_INSTALLER_REPO:-https://github.com/leenium/installer.git}"
 LEENIUM_INSTALLER_REF="${LEENIUM_INSTALLER_REF:-master}"
@@ -44,13 +92,16 @@ LEENIUM_PACKAGE_REPO_URL="${LEENIUM_PACKAGE_REPO_URL:-https://pkg.drunkleen.com/
 DOCKER_ARGS=(
   --rm
   --privileged
+  -e "FORCE_COLOR=1"
   -e "LEENIUM_INSTALLER_REPO=$LEENIUM_INSTALLER_REPO"
   -e "LEENIUM_INSTALLER_REF=$LEENIUM_INSTALLER_REF"
   -e "LEENIUM_STABLE_MIRROR_URL=$LEENIUM_STABLE_MIRROR_URL"
   -e "LEENIUM_PACKAGE_REPO_URL=$LEENIUM_PACKAGE_REPO_URL"
+  -e "LEENIUM_ISO_LOG_DIR=/logs/$BUILD_TIMESTAMP"
   -e "HOST_UID=$(id -u)"
   -e "HOST_GID=$(id -g)"
   -v "$BUILD_RELEASE_PATH/:/out/"
+  -v "$BUILD_LOG_PATH:/logs/"
   -v "$BUILD_ROOT/$BUILD_SCRIPT:/$BUILD_SCRIPT:ro"
   -v "$BUILD_ROOT/archiso:/archiso:ro"
   -v "$BUILD_ROOT/builder:/builder:ro"
@@ -89,12 +140,16 @@ if [[ -z "$NO_CACHE" ]]; then
 fi
 
 # Run the builder with assembled args
+section "Container Build"
+info "Installer ref: $LEENIUM_INSTALLER_REF"
+info "Package repo: ${LEENIUM_PACKAGE_REPO_URL//\$arch/$(uname -m)}"
 docker run "${DOCKER_ARGS[@]}" archlinux/archlinux:latest /$BUILD_SCRIPT
 
 # Move as install ref
 latest_iso=$(\ls -t "$BUILD_RELEASE_PATH"/*.iso | head -n1)
 iso_ref="${latest_iso%.*}-$LEENIUM_INSTALLER_REF.iso"
 mv -f "$latest_iso" "$iso_ref"
+ok "ISO ready: $iso_ref"
 
 # Offer to boot the new build
 if [[ -z "$NO_BOOT_OFFER" ]]; then

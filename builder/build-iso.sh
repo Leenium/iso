@@ -6,10 +6,10 @@ LEENIUM_STABLE_MIRROR_URL="${LEENIUM_STABLE_MIRROR_URL:-https://geo.mirror.pkgbu
 LEENIUM_PACKAGE_REPO_URL="${LEENIUM_PACKAGE_REPO_URL:-https://pkg.drunkleen.com/stable/\$arch}"
 PACMAN_ONLINE_CONFIG="/tmp/pacman-online-stable.conf"
 PACMAN_BOOTSTRAP_CONFIG="/tmp/pacman-bootstrap-local.conf"
-LOG_DIR="/tmp/leenium-iso-logs"
+LOG_DIR="${LEENIUM_ISO_LOG_DIR:-/tmp/leenium-iso-logs}"
 mkdir -p "$LOG_DIR"
 
-if [[ -t 1 ]]; then
+if [[ -t 1 || "${FORCE_COLOR:-0}" == "1" ]]; then
   C_RESET=$'\033[0m'
   C_DIM=$'\033[2m'
   C_BOLD=$'\033[1m'
@@ -29,24 +29,28 @@ else
   C_RED=''
 fi
 
+timestamp() {
+  date '+%Y-%m-%d %H:%M:%S'
+}
+
 section() {
   printf '\n%s%s== %s ==%s\n' "$C_BOLD" "$C_BLUE" "$1" "$C_RESET"
 }
 
 info() {
-  printf '%s•%s %s\n' "$C_CYAN" "$C_RESET" "$1"
+  printf '%s[%s] INFO%s %s\n' "$C_CYAN" "$(timestamp)" "$C_RESET" "$1"
 }
 
 ok() {
-  printf '%sOK%s %s\n' "$C_GREEN" "$C_RESET" "$1"
+  printf '%s[%s] OK%s %s\n' "$C_GREEN" "$(timestamp)" "$C_RESET" "$1"
 }
 
 warn() {
-  printf '%sWARN%s %s\n' "$C_AMBER" "$C_RESET" "$1"
+  printf '%s[%s] WARN%s %s\n' "$C_AMBER" "$(timestamp)" "$C_RESET" "$1"
 }
 
 fail() {
-  printf '%sERROR%s %s\n' "$C_RED" "$C_RESET" "$1" >&2
+  printf '%s[%s] ERROR%s %s\n' "$C_RED" "$(timestamp)" "$C_RESET" "$1" >&2
 }
 
 run_logged() {
@@ -112,6 +116,7 @@ replace_in_file \
   'LocalFileSigLevel = Never'
 
 section "Prepare Build Environment"
+info "Detailed step logs: $LOG_DIR"
 info "Stable mirror: ${LEENIUM_STABLE_MIRROR_URL//\$repo\/os\/\$arch/<repo>}"
 info "Leenium repo: ${LEENIUM_PACKAGE_REPO_URL//\$arch/$(uname -m)}"
 
