@@ -39,7 +39,7 @@ mkdir -p "$BUILD_RELEASE_PATH"
 LEENIUM_INSTALLER_REPO="${LEENIUM_INSTALLER_REPO:-https://github.com/leenium/installer.git}"
 LEENIUM_INSTALLER_REF="${LEENIUM_INSTALLER_REF:-master}"
 LEENIUM_STABLE_MIRROR_URL="${LEENIUM_STABLE_MIRROR_URL:-https://geo.mirror.pkgbuild.com/\$repo/os/\$arch}"
-LEENIUM_PACKAGE_REPO_URL="${LEENIUM_PACKAGE_REPO_URL:-https://pkgs.leenium.drunkleen.com/stable/\$arch}"
+LEENIUM_PACKAGE_REPO_URL="${LEENIUM_PACKAGE_REPO_URL:-https://pkg.drunkleen.com/stable/\$arch}"
 
 DOCKER_ARGS=(
   --rm
