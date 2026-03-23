@@ -16,13 +16,12 @@ jobs:
         submodules: recursive
 
     - name: Build ISO
-      working-directory: iso
       run: make build NO_BOOT_OFFER=1
 
     - name: Upload ISO artifact
       uses: actions/upload-artifact@v4
       with:
         name: leenium-iso-${{ github.run_number }}
-        path: iso/release/*.iso
+        path: release/*.iso
         if-no-files-found: error
         retention-days: 30
